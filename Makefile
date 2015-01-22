@@ -5,7 +5,8 @@ PREFIX=/etc/sensu/plugins
 MAINTAINER="$(USER)@$(shell hostname)"
 VENDOR="Community"
 URL=$(shell git config remote.origin.url)
-LICENSE=MIT
+LICENSE="MIT"
+CATEGORY="Monitoring"
 DESCRIPTION="Collection of plugins for Sensu maintained by the community"
 
 SOURCES=extensions handlers mutators plugins
@@ -13,4 +14,4 @@ SOURCES=extensions handlers mutators plugins
 .PHONY=package
 
 package:
-	fakeroot fpm -f -n $(NAME) -v $(VERSION) --license=$(LICENSE) --vendor=$(VENDOR) --url $(URL) -m $(MAINTAINER) --category=Monitoring -s dir -t $(TARGET) --description=$(DESCRIPTION) --prefix $(PREFIX) $(SOURCES)
+	fakeroot fpm -t $(TARGET) -s dir --prefix $(PREFIX) --force --verbose --log info --name $(NAME) --version $(VERSION) --license $(LICENSE) --vendor $(VENDOR) --url $(URL) --maintainer $(MAINTAINER) --description $(DESCRIPTION) --category $(CATEGORY) $(SOURCES)
