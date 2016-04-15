@@ -1,8 +1,8 @@
-VERSION=2.0
+VERSION=2.3.14
 TARGET=deb
 LOGLEVEL="warn"
 NAME=sensu-community-plugins
-PREFIX=/etc/sensu/plugins
+PREFIX=/etc/sensu
 MAINTAINER="$(shell git config user.email)"
 VENDOR="Community"
 URL=$(shell git config remote.origin.url)
@@ -21,4 +21,4 @@ clean:
 	@rm -f $(NAME)_$(VERSION)*.$(TARGET)
 
 package: $(SOURCES)
-	@fpm -t $(TARGET) -s dir --prefix $(PREFIX) --log $(LOGLEVEL) --force --name $(NAME) --version $(VERSION) --license $(LICENSE) --vendor $(VENDOR) --url $(URL) --maintainer $(MAINTAINER) --description $(DESCRIPTION) --category $(CATEGORY) $?
+	@fpm -t $(TARGET) -s dir --prefix $(PREFIX) --log $(LOGLEVEL) --force --name $(NAME) --version $(VERSION) --license $(LICENSE) --vendor $(VENDOR) --url $(URL) --maintainer $(MAINTAINER) --description $(DESCRIPTION) --category $(CATEGORY) -a all $?

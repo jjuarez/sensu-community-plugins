@@ -14,9 +14,7 @@
 #       by defining the "mail_to" attribute in the client config file. This will override the default mailing list where the
 #       alerts are being routed to for that particular client.
 
-require 'rubygems' if RUBY_VERSION < '1.9.0'
 require 'sensu-handler'
-gem 'mail', '~> 2.5.4'
 require 'mail'
 require 'timeout'
 
@@ -91,15 +89,24 @@ class Mailer < Sensu::Handler
     smtp_authentication = settings[json_config]['smtp_authentication'] || :plain
     smtp_enable_starttls_auto = settings[json_config]['smtp_enable_starttls_auto'] == 'false' ? false : true
 
+    output = "#{@event['check']['output']}"
+    command = "#{@event['check']['command']}"
+
+    inline_password = @event['check']['inline_password']
+    unless inline_password.nil?
+      output = output.gsub(inline_password, '*********')
+      command = command.gsub(inline_password, '*********')
+    end
+
     playbook = "Playbook:  #{@event['check']['playbook']}" if @event['check']['playbook']
     body = <<-BODY.gsub(/^\s+/, '')
-            #{@event['check']['output']}
+            #{output}
             Admin GUI: #{admin_gui}
             Host: #{@event['client']['name']}
             Timestamp: #{Time.at(@event['check']['issued'])}
             Address:  #{@event['client']['address']}
             Check Name:  #{@event['check']['name']}
-            Command:  #{@event['check']['command']}
+            Command:  #{command}
             Status:  #{status_to_string}
             Occurrences:  #{@event['occurrences']}
             #{playbook}

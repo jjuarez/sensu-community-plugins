@@ -1,1 +1,10 @@
+Gemfile.lock
+.bundle
+.ruby-version
+.ruby-gems
+vendor
+node_modules
+scripts/tech_debt.rb
+.vagrant/*
+*.gem
 *.deb

@@ -1,18 +1,31 @@
 #!/usr/bin/env ruby
+#  encoding: UTF-8
 #
-# Check RabbitMQ messages
+# Check RabbitMQ Queue Messages
 # ===
 #
+# DESCRIPTION:
+# This plugin checks the number of messages queued on the RabbitMQ server in a specific queues
+#
+# PLATFORMS:
+#   Linux, BSD, Solaris
+#
+# DEPENDENCIES:
+#   RabbitMQ rabbitmq_management plugin
+#   gem: sensu-plugin
+#   gem: carrot-top
+#
+# LICENSE:
 # Copyright 2012 Evan Hazlett <ejhazlett@gmail.com>
 #
 # Released under the same terms as Sensu (the MIT license); see LICENSE
 # for details.
 
-require 'rubygems' if RUBY_VERSION < '1.9.0'
 require 'sensu-plugin/check/cli'
 require 'socket'
 require 'carrot-top'
 
+# main plugin class
 class CheckRabbitMQMessages < Sensu::Plugin::Check::CLI
   option :host,
          description: 'RabbitMQ management API host',
@@ -43,8 +56,9 @@ class CheckRabbitMQMessages < Sensu::Plugin::Check::CLI
 
   option :queue,
          description: 'RabbitMQ queue to monitor',
-         long: '--queue queue_name',
-         required: true
+         long: '--queue queue_names',
+         required: true,
+         proc: proc { |a| a.split(',') }
 
   option :warn,
          short: '-w NUM_MESSAGES',
@@ -74,20 +88,30 @@ class CheckRabbitMQMessages < Sensu::Plugin::Check::CLI
   end
 
   def run
+    @crit = []
+    @warn = []
     rabbitmq = acquire_rabbitmq_info
     queues = rabbitmq.queues
-    # #YELLOW
-    queues.each do |queue| # rubocop:disable Style/Next
-      if queue['name'] == config[:queue]
+    config[:queue].each do |q|
+      unless queues.map  { |hash| hash['name'] }.include? q
+        @warn << "Queue #{ q } not available"
+        next
+      end
+      queues.each do |queue|
+        next unless queue['name'] == q
         total = queue['messages']
+        total = 0 if total.nil?
         message "#{total}"
-        critical if total > config[:critical].to_i
-        warning if total > config[:warn].to_i
-        ok
+        @crit << "#{ q }:#{ total }" if total > config[:critical].to_i
+        @warn << "#{ q }:#{ total }" if total > config[:warn].to_i
       end
     end
-
-    warning "No Queue: #{config[:queue]}"
-    ok
+    if @crit.empty? && @warn.empty?
+      ok
+    elsif !(@crit.empty?)
+      critical "critical: #{ @crit } warning: #{ @warn }"
+    elsif !(@warn.empty?)
+      warning "critical: #{ @crit } warning: #{ @warn }"
+    end
   end
 end
